@@ -8,20 +8,38 @@ T = 24 * 3600 # Time for desired orbital period s
 RADIUS = ((G * EARTH_MASS)/ ((2*np.pi/T)**2))**(1/3) # m
 TANGENTIAL_SPEED = RADIUS * np.pi * 2 / T
 
-print(TANGENTIAL_SPEED)
-
 def force(position):
     # Fg = G * m1 * m2 / r^2
     r = np.linalg.norm(position)
     f = G * EARTH_MASS * OBJECT_MASS / (r*r)
     return -position * f / r
 
+class ExplicitEuler:
 
-def euler(x, v, h, f):
-    xnew = x + h * v
-    vnew = v + h * f(x) / OBJECT_MASS
-    return xnew, vnew
+    def __init__(self, x0, v0, mass, forcegen):
+        self.forcegen = forcegen
+        self.x = x0
+        self.v = v0
+        self.invmass = 1. / mass
 
+    def update(self, h):
+        xnew = self.x + h * self.v
+        self.v += h * self.forcegen(self.x) * self.invmass
+        self.x = xnew
+        return self.x, self.v
+
+class SymplecticEuler:
+
+    def __init__(self, x0, v0, mass, forcegen):
+        self.forcegen = forcegen
+        self.x = x0
+        self.v = v0
+        self.invmass = 1. / mass
+
+    def update(self, h):
+        self.x += h * self.v
+        self.v += h * self.forcegen(self.x) * self.invmass
+        return self.x, self.v
 
 def run():
     steps = 500
@@ -32,10 +50,10 @@ def run():
 
     xs[0] = np.asarray([RADIUS, 0])    
     vs[0] = np.asarray([0, TANGENTIAL_SPEED])
-    #vs[0] = np.asarray([1000, TANGENTIAL_SPEED])
+    solver = SymplecticEuler(xs[0], vs[0], OBJECT_MASS, force)
 
     for i in range(steps):
-        xs[i + 1], vs[i + 1] = euler(xs[i], vs[i], h, force)
+        xs[i + 1], vs[i + 1] = solver.update(h)
 
     fig = plt.figure()
     p = fig.add_subplot(111, aspect='equal')
