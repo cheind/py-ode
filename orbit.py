@@ -16,29 +16,27 @@ def force(position):
 
 class ExplicitEuler:
 
-    def __init__(self, x0, v0, mass, forcegen):
-        self.forcegen = forcegen
+    def __init__(self, x0, v0, mass):
         self.x = x0
         self.v = v0
         self.invmass = 1. / mass
 
-    def update(self, h):
+    def update(self, h, forcegen):
         xnew = self.x + h * self.v
-        self.v += h * self.forcegen(self.x) * self.invmass
+        self.v += h * forcegen(self.x) * self.invmass
         self.x = xnew
         return self.x, self.v
 
 class SymplecticEuler:
 
-    def __init__(self, x0, v0, mass, forcegen):
-        self.forcegen = forcegen
+    def __init__(self, x0, v0, mass):
         self.x = x0
         self.v = v0
         self.invmass = 1. / mass
 
-    def update(self, h):
+    def update(self, h, forcegen):
         self.x += h * self.v
-        self.v += h * self.forcegen(self.x) * self.invmass
+        self.v += h * forcegen(self.x) * self.invmass
         return self.x, self.v
 
 def run():
@@ -50,10 +48,10 @@ def run():
 
     xs[0] = np.asarray([RADIUS, 0])    
     vs[0] = np.asarray([0, TANGENTIAL_SPEED])
-    solver = SymplecticEuler(xs[0], vs[0], OBJECT_MASS, force)
+    solver = SymplecticEuler(xs[0], vs[0], OBJECT_MASS)
 
     for i in range(steps):
-        xs[i + 1], vs[i + 1] = solver.update(h)
+        xs[i + 1], vs[i + 1] = solver.update(h, force)
 
     fig = plt.figure()
     p = fig.add_subplot(111, aspect='equal')
