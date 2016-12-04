@@ -39,25 +39,41 @@ class SymplecticEuler:
         self.v += h * forcegen(self.x) * self.invmass
         return self.x, self.v
 
+def energy(x, v):
+    return 0.5 * OBJECT_MASS * np.dot(v,v) - G * EARTH_MASS * OBJECT_MASS / np.linalg.norm(x)
+
 def run():
-    steps = 500
-    h = T * 10 / steps
+    steps = 1000
+    periods = 20
+    h = T * periods / steps
 
     xs = np.zeros((steps + 1, 2))
     vs = np.zeros((steps + 1, 2))
+    es = np.zeros((steps + 1, 2))
+    ts = np.zeros((steps + 1, 2))
 
     xs[0] = np.asarray([RADIUS, 0])    
     vs[0] = np.asarray([0, TANGENTIAL_SPEED])
+    es[0] = energy(xs[0], vs[0])
     solver = SymplecticEuler(xs[0], vs[0], OBJECT_MASS)
 
     for i in range(steps):
         xs[i + 1], vs[i + 1] = solver.update(h, force)
+        es[i + 1] = energy(xs[i + 1], vs[i + 1])
+        ts[i + 1] = ts[i] + h
 
     fig = plt.figure()
     p = fig.add_subplot(111, aspect='equal')
     p.scatter(0, 0, s=40, marker='o', color='b')
     p.scatter(xs[:, 0], xs[:, 1], s=1, marker='o', alpha=0.5, antialiased=True)    
+
+    fig = plt.figure()
+    p = fig.add_subplot(111)
+    p.plot(ts, es)
+
     plt.show()
+
+
 
 if __name__ == "__main__":
     run()        
